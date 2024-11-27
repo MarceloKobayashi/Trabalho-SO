@@ -9,7 +9,7 @@ ARQUIVO_USUARIOS = "usuarios.txt"
 PROPRIETARIOS = "proprietarios.txt"
 
 def processo_wrapper(funcao, *args):
-    print(f"[PID: {os.getpid()}] Executando comando...")
+    print(f"----[PID: {os.getpid()}]----")
     funcao(*args)
 
 
@@ -55,10 +55,22 @@ def menu_inicial():
                 usuario_logado = login_usuario(login, senha)
                 if usuario_logado:
                     return usuario_logado
+            else:
+                login = input("Digite o login: ").strip()
+                senha = getpass.getpass("Digite a senha: ").strip()
+                usuario_logado = login_usuario(login, senha)
+                if usuario_logado:
+                    return usuario_logado  # Retorna o login do usuário autenticado
+                else:
+                    print("Login ou senha incorretos. Tente novamente.")
         elif opcao == "2":
             login = input("Digite o login: ").strip()
             senha = getpass.getpass("Digite a senha: ").strip()
             executar_comando_no_processo(cadastrar_usuario, login, senha)
+
+            usuario_logado = login_usuario(login, senha)
+            if usuario_logado:
+                    return usuario_logado
         elif opcao == "3":
             print("Saindo do MiniSO...")
             exit()
@@ -250,74 +262,90 @@ def rm_r(usuario, diretorio):
 
 def exibir_comandos():
     print("\nComandos disponíveis no MiniSO:")
-    print("  - ls [diretório]                -> Lista o conteúdo do diretório (ou do atual, se não especificado)")
-    print("     Exemplo: ls                 -> Lista o conteúdo do diretório atual")
-    print("     Exemplo: ls /caminho/dir    -> Lista o conteúdo do diretório '/caminho/dir'")
+    print("  - listar [diretório]                -> Lista o conteúdo do diretório (ou do atual, se não especificado)")
+    print("     Exemplo: listar                 -> Lista o conteúdo do diretório atual")
+    print("     Exemplo: listar /caminho/dir    -> Lista o conteúdo do diretório '/caminho/dir'")
     print()
-    print("  - touch [arquivo]              -> Cria um arquivo no diretório especificado")
-    print("     Exemplo: touch arquivo.txt  -> Cria o arquivo 'arquivo.txt' no diretório atual")
-    print("     Exemplo: touch /dir/novo.txt -> Cria o arquivo 'novo.txt' no diretório '/dir'")
+    print("  - criar arquivo [arquivo]          -> Cria um arquivo no diretório especificado")
+    print("     Exemplo: criar arquivo arquivo.txt  -> Cria o arquivo 'arquivo.txt' no diretório atual")
+    print("     Exemplo: criar arquivo /dir/novo.txt -> Cria o arquivo 'novo.txt' no diretório '/dir'")
     print()
-    print("  - rm [arquivo]                 -> Remove o arquivo especificado")
-    print("     Exemplo: rm arquivo.txt     -> Remove o arquivo 'arquivo.txt' no diretório atual")
-    print("     Exemplo: rm /dir/velho.txt  -> Remove o arquivo 'velho.txt' no diretório '/dir'")
+    print("  - apagar arquivo [arquivo]         -> Remove o arquivo especificado")
+    print("     Exemplo: apagar arquivo arquivo.txt -> Remove o arquivo 'arquivo.txt' no diretório atual")
+    print("     Exemplo: apagar arquivo /dir/velho.txt -> Remove o arquivo 'velho.txt' no diretório '/dir'")
     print()
-    print("  - mkdir [diretório]            -> Cria um diretório no caminho especificado")
-    print("     Exemplo: mkdir novo_dir     -> Cria o diretório 'novo_dir' no diretório atual")
-    print("     Exemplo: mkdir /dir/subdir  -> Cria o diretório 'subdir' dentro de '/dir'")
+    print("  - criar diretorio [diretório]      -> Cria um diretório no caminho especificado")
+    print("     Exemplo: criar diretorio novo_dir -> Cria o diretório 'novo_dir' no diretório atual")
+    print("     Exemplo: criar diretorio /dir/subdir -> Cria o diretório 'subdir' dentro de '/dir'")
     print()
-    print("  - rmdir [diretório]            -> Remove um diretório vazio")
-    print("     Exemplo: rmdir vazio        -> Remove o diretório 'vazio' no diretório atual")
-    print("     Exemplo: rmdir /dir/vazio   -> Remove o diretório 'vazio' em '/dir'")
+    print("  - apagar diretorio [diretório]     -> Remove um diretório vazio")
+    print("     Exemplo: apagar diretorio vazio -> Remove o diretório 'vazio' no diretório atual")
+    print("     Exemplo: apagar diretorio /dir/vazio -> Remove o diretório 'vazio' em '/dir'")
     print()
-    print("  - rm -r [diretório]            -> Remove um diretório e seu conteúdo recursivamente")
-    print("     Exemplo: rm -r cheio        -> Remove o diretório 'cheio' e todo seu conteúdo")
-    print("     Exemplo: rm -r /dir/cheio   -> Remove o diretório 'cheio' em '/dir' e todo seu conteúdo")
+    print("  - apagar diretorio [diretório] --force  -> Remove um diretório e seu conteúdo recursivamente")
+    print("     Exemplo: apagar diretorio -r cheio -> Remove o diretório 'cheio' e todo seu conteúdo")
+    print("     Exemplo: apagar diretorio -r /dir/cheio -> Remove o diretório 'cheio' em '/dir' e todo seu conteúdo")
     print()
-    print("  - exit                         -> Sai do MiniSO")
-    print("     Exemplo: exit               -> Encerra o sistema")
+    print("  - exit                             -> Sai do MiniSO")
+    print("     Exemplo: exit                   -> Encerra o sistema")
+
 
 
 def shell(usuario):
     while True:
         comando = input(f"{usuario}@miniso:~$ ").strip()
-        if comando.startswith("ls"):
+        
+        if comando.startswith("listar"):
             args = comando.split(" ", 1)
             diretorio = args[1] if len(args) > 1 else "."
             executar_comando_no_processo(ls, diretorio)
-        elif comando.startswith("touch"):
-            args = comando.split(" ", 1)
-            if len(args) > 1:
-                executar_comando_no_processo(touch, usuario, args[1])
+        
+        elif comando.startswith("criar arquivo"):
+            args = comando.split(" ", 2)
+            if len(args) > 2:
+                executar_comando_no_processo(touch, usuario, args[2])
             else:
-                print("Uso: touch <arquivo>")
-        elif comando.startswith("rm -r "):
-            caminho = comando[6:].strip()
-            if caminho:
-                executar_comando_no_processo(rm_r, usuario, caminho)
+                print("Uso: criar arquivo <arquivo>")
+        
+        elif comando.startswith("apagar diretorio"):
+            args = comando.split(" ")
+            if "--force" in args:
+                index = args.index("--force")
+                caminho = " ".join(args[2:index]).strip()
+                if caminho:
+                    executar_comando_no_processo(rm_r, usuario, caminho)
+                else:
+                    print("Uso: apagar diretorio [diretório] --force")
+            elif len(args) > 2:
+                executar_comando_no_processo(rmdir, usuario, args[2])
             else:
-                print("Uso: rm -r <diretório>")
-        elif comando.startswith("rmdir"):
-            args = comando.split(" ", 1)
-            if len(args) > 1:
-                executar_comando_no_processo(rmdir, usuario, args[1])
+                print("Uso: apagar diretorio <diretório> ou apagar diretorio [diretório] --force")
+        
+        elif comando.startswith("apagar diretorio"):
+            args = comando.split(" ", 2)
+            if len(args) > 2:
+                executar_comando_no_processo(rmdir, usuario, args[2])
             else:
-                print("Uso: rmdir <diretório>")
-        elif comando.startswith("rm"):
-            args = comando.split(" ", 1)
-            if len(args) > 1:
-                executar_comando_no_processo(rm, usuario, args[1])
+                print("Uso: apagar diretorio <diretório>")
+        
+        elif comando.startswith("apagar arquivo"):
+            args = comando.split(" ", 2)
+            if len(args) > 2:
+                executar_comando_no_processo(rm, usuario, args[2])
             else:
-                print("Uso: rm <arquivo>")
-        elif comando.startswith("mkdir"):
-            args = comando.split(" ", 1)
-            if len(args) > 1:
-                executar_comando_no_processo(mkdir, usuario, args[1])
+                print("Uso: apagar arquivo <arquivo>")
+        
+        elif comando.startswith("criar diretorio"):
+            args = comando.split(" ", 2)
+            if len(args) > 2:
+                executar_comando_no_processo(mkdir, usuario, args[2])
             else:
-                print("Uso: mkdir <diretório>")
+                print("Uso: criar diretorio <diretório>")
+        
         elif comando == "exit":
             print("Saindo do MiniSO...")
             break
+        
         else:
             print(f"Comando não reconhecido: {comando}")
 
